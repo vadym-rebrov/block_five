@@ -33,7 +33,7 @@ public class Message {
 
     @Field(type = FieldType.Keyword)
     @NotEmpty(message = "Recipient list cannot be empty")
-    private List<@Email String> recipientsEmail;
+    private List<@Email String> recipientEmails;
 
     @Field(type = FieldType.Text, analyzer = "standard")
     @NotBlank(message = "Subject cannot be empty")

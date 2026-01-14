@@ -23,8 +23,8 @@ public class JavaEmailService implements EmailService {
         mailMessage.setFrom(serverEmail);
         mailMessage.setReplyTo(message.getSenderEmail());
 
-        if (message.getRecipientsEmail() != null && !message.getRecipientsEmail().isEmpty()) {
-            String[] recipients = message.getRecipientsEmail().toArray(new String[0]);
+        if (message.getRecipientEmails() != null && !message.getRecipientEmails().isEmpty()) {
+            String[] recipients = message.getRecipientEmails().toArray(new String[0]);
             mailMessage.setTo(recipients);
         } else {
             throw new IllegalArgumentException("Recipient list cannot be empty");

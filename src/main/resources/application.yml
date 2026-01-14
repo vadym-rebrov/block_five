@@ -12,9 +12,12 @@ spring:
     consumer:
       group-id: email-worker-group
       auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.value.default.type: dev.profitsoft.internship.rebrov.block_five.dto.MessageEventDto
         spring.json.trusted.packages: "*"
 
     producer:
@@ -23,7 +26,7 @@ spring:
 
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
+    port: ${MAIL_PORT:465}
     username: ${MAIL_USERNAME:email@gmail.com}
     password: ${MAIL_PASSWORD:app-password}
     protocol: smtp
@@ -32,10 +35,13 @@ spring:
         smtp:
           auth: true
           starttls:
+            enable: false
+            required: false
+          ssl:
             enable: true
-          connectiontimeout: 5000
-          timeout: 5000
-          writetimeout: 5000
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
 logging:
   level:
     root: INFO
