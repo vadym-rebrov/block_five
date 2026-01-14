@@ -43,9 +43,12 @@ public class Message {
     @NotBlank(message = "Content cannot be empty")
     private String content;
 
-    @Field(type = FieldType.Nested)
-    private List<Attachment> attachments;
+//  @Field(type = FieldType.Nested)
+//  private List<Attachment> attachments;
 
     @Field(type = FieldType.Keyword)
     private MessageStatus status;
+
+    @Field(type = FieldType.Text)
+    private String errorMessage;
 }

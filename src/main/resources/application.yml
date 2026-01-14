@@ -1,0 +1,43 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: email-notification-service
+  elasticsearch:
+    uris: http://localhost:9200
+    connection-timeout: 5s
+    socket-timeout: 5s
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: email-worker-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:email@gmail.com}
+    password: ${MAIL_PASSWORD:app-password}
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+logging:
+  level:
+    root: INFO
+    org.springframework.data.elasticsearch.client.WIRE: TRACE
+    org.springframework.kafka: INFO
