@@ -83,7 +83,6 @@ public class MessageManager {
     private Message mapDtoToMessage(MessageEventDto event) {
         Message message = new Message();
         message.setId(event.getRequestId() != null ? event.getRequestId() : UUID.randomUUID().toString());
-        message.setSenderEmail(event.getSenderEmail());
         message.setRecipientEmails(event.getRecipientEmails());
         message.setSubject(event.getSubject());
         message.setContent(event.getContent());

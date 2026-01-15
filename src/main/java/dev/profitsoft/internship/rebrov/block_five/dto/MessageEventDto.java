@@ -12,7 +12,6 @@ import java.util.List;
 @AllArgsConstructor
 public class MessageEventDto {
     private String requestId;
-    private String senderEmail;
     private List<String> recipientEmails;
     private String subject;
     private String content;

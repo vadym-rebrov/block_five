@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8081
 spring:
   application:
     name: email-notification-service
@@ -19,6 +19,7 @@ spring:
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
         spring.json.value.default.type: dev.profitsoft.internship.rebrov.block_five.dto.MessageEventDto
         spring.json.trusted.packages: "*"
+        spring.json.use.type.headers: false
 
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
