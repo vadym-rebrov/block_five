@@ -29,7 +29,7 @@ public class MessageManager {
 
     private static final int BATCH_SIZE = 100;
 
-    @KafkaListener(topics = "email-sending-tasks", groupId = "email-worker")
+    @KafkaListener(topics = "movie-created-events", groupId = "email-worker")
     public void consumeEmailTask(MessageEventDto event) {
         log.info("Received event for request: {}", event.getRequestId());
         Message message = mapDtoToMessage(event);
