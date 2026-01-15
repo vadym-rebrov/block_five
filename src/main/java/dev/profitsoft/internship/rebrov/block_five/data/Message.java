@@ -1,4 +1,4 @@
-package dev.profitsoft.internship.rebrov.block_five.model;
+package dev.profitsoft.internship.rebrov.block_five.data;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,8 +15,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 
+import java.io.File;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -54,16 +54,20 @@ public class Message {
     @Field(type = FieldType.Keyword)
     private MessageStatus currentStatus;
 
-    @Field(type = FieldType.Text)
-    private String currentErrorMessage;
+    @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis)
+    private Instant timestamp;
 
     @Field(type = FieldType.Integer)
     @Builder.Default
-    private Integer sentAttempt = 0;
+    private Integer sendingAttempt = 0;
+
+    public void addStatus(MessageStatus newStatus){
+        this.addStatus(newStatus, "");
+    }
 
     public void addStatus(MessageStatus newStatus, String details) {
         this.currentStatus = newStatus;
-        this.currentErrorMessage = details;
-        this.history.add(new StatusHistory(newStatus, Instant.now(), details));
+        this.timestamp = Instant.now();
+        this.history.add(new StatusHistory(newStatus, this.timestamp, details));
     }
 }

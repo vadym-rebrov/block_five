@@ -1,6 +1,6 @@
 package dev.profitsoft.internship.rebrov.block_five.service;
 
-import dev.profitsoft.internship.rebrov.block_five.model.Message;
+import dev.profitsoft.internship.rebrov.block_five.data.Message;
 
 public interface EmailService {
 

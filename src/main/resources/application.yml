@@ -47,3 +47,8 @@ logging:
     root: INFO
     org.springframework.data.elasticsearch.client.WIRE: TRACE
     org.springframework.kafka: INFO
+scheduler:
+  retry:
+    interval: 300000 # 5 Minutes
+  max-attempts:
+    value: 5

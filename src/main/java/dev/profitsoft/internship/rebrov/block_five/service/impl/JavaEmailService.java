@@ -1,6 +1,6 @@
 package dev.profitsoft.internship.rebrov.block_five.service.impl;
 
-import dev.profitsoft.internship.rebrov.block_five.model.Message;
+import dev.profitsoft.internship.rebrov.block_five.data.Message;
 import dev.profitsoft.internship.rebrov.block_five.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

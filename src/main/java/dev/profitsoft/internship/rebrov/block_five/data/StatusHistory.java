@@ -1,4 +1,4 @@
-package dev.profitsoft.internship.rebrov.block_five.model;
+package dev.profitsoft.internship.rebrov.block_five.data;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
