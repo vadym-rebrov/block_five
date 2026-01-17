@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.util.stream.Stream;
 
 @Repository
-public interface MessageRepository extends ElasticsearchRepository<Message, Long> {
+public interface MessageRepository extends ElasticsearchRepository<Message, String> {
 
     Stream<Message> findByCurrentStatusAndSendingAttemptLessThan(MessageStatus status, Integer maxAttempts);
 }

@@ -4,10 +4,12 @@ import dev.profitsoft.internship.rebrov.block_five.dto.MessageEventDto;
 import dev.profitsoft.internship.rebrov.block_five.data.Message;
 import dev.profitsoft.internship.rebrov.block_five.data.MessageStatus;
 import dev.profitsoft.internship.rebrov.block_five.repository.MessageRepository;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +32,7 @@ public class MessageManager {
     private static final int BATCH_SIZE = 100;
 
     @KafkaListener(topics = "movie-created-events", groupId = "email-worker")
-    public void consumeEmailTask(MessageEventDto event) {
+    public void consumeEmailTask(@Payload @Valid MessageEventDto event) {
         log.info("Received event for request: {}", event.getRequestId());
         Message message = mapDtoToMessage(event);
         messageRepository.save(message);
