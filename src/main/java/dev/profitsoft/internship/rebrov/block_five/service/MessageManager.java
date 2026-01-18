@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -34,6 +35,14 @@ public class MessageManager {
     @KafkaListener(topics = "movie-created-events", groupId = "email-worker")
     public void consumeEmailTask(@Payload @Valid MessageEventDto event) {
         log.info("Received event for request: {}", event.getRequestId());
+        Optional<Message> existingMessageOpt = messageRepository.findById(event.getRequestId());
+        if (existingMessageOpt.isPresent()) {
+            Message existing = existingMessageOpt.get();
+            if (existing.getCurrentStatus() == MessageStatus.SENT) {
+                log.info("Message with id {} already processed. Skipping duplicate.", event.getRequestId());
+                return;
+            }
+        }
         Message message = mapDtoToMessage(event);
         messageRepository.save(message);
         trySendEmail(message);

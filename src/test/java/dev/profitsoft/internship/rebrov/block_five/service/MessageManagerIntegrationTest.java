@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mail.MailSendException;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -17,16 +18,17 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.kafka.KafkaContainer;
+import org.testcontainers.utility.DockerImageName;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 
 @SpringBootTest
@@ -37,18 +39,25 @@ public class MessageManagerIntegrationTest {
             .withEnv("discovery.type", "single-node")
             .withEnv("xpack.security.enabled", "false");
 
+    @Container
+    static KafkaContainer kafka = new KafkaContainer(DockerImageName.parse("apache/kafka:3.7.0"));
+
     @Autowired
     private MessageManager messageManager;
 
     @Autowired
     private MessageRepository messageRepository;
 
+    @Autowired
+    private KafkaTemplate<String, MessageEventDto> kafkaTemplate;
+
     @MockitoBean
     private EmailService emailService;
 
     @DynamicPropertySource
-    static void setElasticProperties(DynamicPropertyRegistry registry) {
+    static void setProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.elasticsearch.uris", elasticsearch::getHttpHostAddress);
+        registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
     }
 
     @AfterEach
@@ -57,7 +66,7 @@ public class MessageManagerIntegrationTest {
     }
 
     @Test
-    @DisplayName("Успішний сценарій з реальним Elastic: повідомлення зберігається зі статусом SENT")
+    @DisplayName("Should save message with SENT status when email service succeeds")
     void shouldSaveMessageWithSentStatus_WhenEmailServiceSucceeds() {
         String requestId = UUID.randomUUID().toString();
         MessageEventDto event = createEventDto(requestId);
@@ -70,7 +79,7 @@ public class MessageManagerIntegrationTest {
     }
 
     @Test
-    @DisplayName("Сценарій помилки з реальним Elastic: повідомлення зберігається зі статусом FAILED")
+    @DisplayName("Should save message with FAILED status when email service throws exception")
     void shouldSaveMessageWithFailedStatus_WhenEmailServiceThrowsException() {
         String requestId = UUID.randomUUID().toString();
         MessageEventDto event = createEventDto(requestId);
@@ -94,5 +103,59 @@ public class MessageManagerIntegrationTest {
                 .subject("Integration Test Subject")
                 .content("Test Content")
                 .build();
+    }
+
+    @Test
+    @DisplayName("Should not send email twice when duplicate message is received")
+    void shouldNotSendEmailTwice_WhenDuplicateMessageArrives() throws InterruptedException {
+        String sharedRequestId = UUID.randomUUID().toString();
+        MessageEventDto event = MessageEventDto.builder()
+                .requestId(sharedRequestId) // Один і той самий ID
+                .recipientEmails(List.of("duplicate@test.com"))
+                .subject("Idempotency Test")
+                .content("Content")
+                .build();
+
+        Mockito.doNothing().when(emailService).send(any(Message.class));
+        kafkaTemplate.send("movie-created-events", event);
+        Thread.sleep(2000);
+        kafkaTemplate.send("movie-created-events", event);
+        Thread.sleep(2000);
+        verify(emailService, times(1)).send(any(Message.class));
+        Optional<Message> savedMessage = messageRepository.findById(sharedRequestId);
+        assertThat(savedMessage).isPresent();
+        assertThat(savedMessage.get().getSendingAttempt()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Should ignore message when request ID is invalid UUID")
+    void shouldIgnoreMessage_WhenDtoIsInvalid() throws InterruptedException {
+
+        MessageEventDto invalidDto = MessageEventDto.builder()
+                .requestId("invalid-uuid-string")
+                .recipientEmails(List.of("valid@email.com"))
+                .subject("Subject")
+                .content("Content")
+                .build();
+
+        kafkaTemplate.send("movie-created-events", invalidDto);
+        Thread.sleep(2000);
+        verify(emailService, never()).send(any(Message.class));
+        assertThat(messageRepository.count()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Should ignore message when recipient list is empty")
+    void shouldIgnoreMessage_WhenRecipientListIsEmpty() throws InterruptedException {
+        MessageEventDto invalidDto = MessageEventDto.builder()
+                .requestId(UUID.randomUUID().toString())
+                .recipientEmails(Collections.emptyList())
+                .subject("Subject")
+                .content("Content")
+                .build();
+        kafkaTemplate.send("movie-created-events", invalidDto);
+        Thread.sleep(2000);
+        verify(emailService, never()).send(any(Message.class));
+        assertThat(messageRepository.count()).isEqualTo(0);
     }
 }
