@@ -106,6 +106,29 @@ public class MessageManagerIntegrationTest {
     }
 
     @Test
+    @DisplayName("Should retry failed message and change status to SENT when service succeeds")
+    void shouldRetryFailedMessage_WhenEmailServiceSucceeds() {
+        String requestId = UUID.randomUUID().toString();
+        Message failedMessage = Message.builder()
+                .id(requestId)
+                .senderEmail("noreply@test.com")
+                .recipientEmails(List.of("retry-recipient@example.com"))
+                .subject("Retry Subject")
+                .content("Retry Content")
+                .currentStatus(MessageStatus.FAILED)
+                .sendingAttempt(1)
+                .build();
+
+        messageRepository.save(failedMessage);
+        Mockito.doNothing().when(emailService).send(any(Message.class));
+        messageManager.retryFailedMessages();
+        verify(emailService, times(1)).send(argThat(msg -> msg.getId().equals(requestId)));
+        Optional<Message> updatedMessageOpt = messageRepository.findById(requestId);
+        assertThat(updatedMessageOpt).isPresent();
+        assertThat(updatedMessageOpt.get().getCurrentStatus()).isEqualTo(MessageStatus.SENT);
+    }
+
+    @Test
     @DisplayName("Should not send email twice when duplicate message is received")
     void shouldNotSendEmailTwice_WhenDuplicateMessageArrives() throws InterruptedException {
         String sharedRequestId = UUID.randomUUID().toString();
